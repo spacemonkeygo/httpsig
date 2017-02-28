@@ -1,7 +1,7 @@
 # HTTPSIG for Go
 
-This library implements http request signature generation and verification based on
-the RFC draft specification: https://tools.ietf.org/html/draft-cavage-http-signatures-06.
+This library implements HTTP request signature generation and verification based on
+the RFC draft specification https://tools.ietf.org/html/draft-cavage-http-signatures-06.
 
 The library strives be compatible with the popular python library of the same
 name: https://github.com/ahknight/httpsig
@@ -14,11 +14,11 @@ go get gopkg.in/spacemonkey/spacemonkeygo/httpsig.v1
 
 ## Signing Requests
 
-Signing requests is done by constructing a new Signer. The key id, key,
-algorithm, and what headers to sign is required. 
+Signing requests is done by constructing a new `Signer`. The key id, key,
+algorithm, and what headers to sign are required. 
 
-For example to construct a signer with key id "foo", using an RSA private key,
-for the rsa-sha256 algorithm, with the default header set, you can do:
+For example to construct a `Signer` with key id `"foo"`, using an RSA private
+key, for the rsa-sha256 algorithm, with the default header set, you can do:
 
 ```
 var key *rsa.PrivateKey = ...
@@ -42,13 +42,22 @@ adds an `Authorization` header containing the signature parameters.
 
 ```
 err = signer.Sign(req)
+if err != nil {
+    ...
+}
+fmt.Println("AUTHORIZATION:", req.Header.Get('Authorization'))
+
+...
+
+AUTHORIZATION: Signature: keyId="foo",algorithm="sha-256",signature="..."
+
 ```
 
 ## Verifying Requests
 
-Verify requests is done by constructing a new Verifier. The verifier requires
-a KeyGetter implementation to look up keys based on keyId's retrieved from
-signature parameters.
+Verifying requests is done by constructing a new `Verifier`. The verifier
+requires a KeyGetter implementation to look up keys based on `keyId`'s
+retrieved from signature parameters.
 
 ```
 var getter httpsig.KeyGetter = ....
@@ -66,15 +75,16 @@ in the signature. The `RequireHeaders` field can be set to enforce stricter
 requirements.
 
 ```
-verifier.RequireHeaders = []string{"(request-target)", "host", "date"}
+verifier.SetRequireHeaders([]string{"(request-target)", "host", "date"})
 ```
 
-**Note that RequiredHeaders is simply a requirement for which headers get
-included in the signature, and does not enforce header presence in requests.
+**Note that required headers are simply a specification for which headers must
+be included in the signature, and does not enforce header presence in requests.
 It is up to callers to validate header contents (or the lack thereof).**
 
-A simple in-memory store is provided by the library and can be constructed with
-the `NewMemoryKeyStore()` function. Keys can be added using the SetKey method:
+A simple in-memory key store is provided by the library and can be constructed
+with the `NewMemoryKeyStore()` function. Keys can be added using the SetKey
+method:
 ```
 keystore := NewMemoryKeyStore()
 
@@ -99,8 +109,9 @@ var verifier *httpsig.Verifier = ...
 wrapped := httpsig.RequireSignature(handler, verifier, "example.com")
 ```
 
-If signature validation fails, a `401` is along with a `WWW-Authenticate`
-with the `Signature` challenge with an optional `realm` and `headers` parameters.
+If signature validation fails, a `401` is returned along with a
+`WWW-Authenticate` header containing  a `Signature` challenge with optional
+`realm` and `headers` parameters.
 
 ## Supported algorithms
 
