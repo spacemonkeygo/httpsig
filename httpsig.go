@@ -33,3 +33,12 @@ type Algorithm interface {
 type KeyGetter interface {
 	GetKey(id string) interface{}
 }
+
+// KeyGetterFunc is a convenience type for implementing a KeyGetter with a
+// regular function
+type KeyGetterFunc func(id string) interface{}
+
+// GetKey calls fn(id)
+func (fn KeyGetterFunc) GetKey(id string) interface{} {
+	return fn(id)
+}
