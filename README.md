@@ -9,7 +9,7 @@ name: https://github.com/ahknight/httpsig
 ## Installing
 
 ```
-go get gopkg.in/spacemonkey/spacemonkeygo/httpsig.v1
+go get gopkg.in/spacemonkey/spacemonkeygo/httpsig.v0
 ```
 
 ## Signing Requests
@@ -71,12 +71,15 @@ err = verifier.Verify(req)
 ```
 
 By default, the verifier only requires the `Date` header to be included
-in the signature. The `RequireHeaders` field can be set to enforce stricter
-requirements.
+in the signature. The set of required headers be changed using the
+`SetRequiredHeaders()` method to enforce stricter requirements.
 
 ```
 verifier.SetRequireHeaders([]string{"(request-target)", "host", "date"})
 ```
+
+Requests that don't include the full set of required headers in the `headers`
+signature parameter (either implicity or explicity) will fail verification.
 
 **Note that required headers are simply a specification for which headers must
 be included in the signature, and does not enforce header presence in requests.
@@ -121,7 +124,7 @@ If signature validation fails, a `401` is returned along with a
 
 ### License
 
-Copyright (C) 2014 Space Monkey, Inc.
+Copyright (C) 2017 Space Monkey, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
