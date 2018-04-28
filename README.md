@@ -15,7 +15,7 @@ go get gopkg.in/spacemonkey/spacemonkeygo/httpsig.v0
 ## Signing Requests
 
 Signing requests is done by constructing a new `Signer`. The key id, key,
-algorithm, and what headers to sign are required. 
+algorithm, and what headers to sign are required.
 
 For example to construct a `Signer` with key id `"foo"`, using an RSA private
 key, for the rsa-sha256 algorithm, with the default header set, you can do:
@@ -75,7 +75,7 @@ in the signature. The set of required headers be changed using the
 `SetRequiredHeaders()` method to enforce stricter requirements.
 
 ```
-verifier.SetRequireHeaders([]string{"(request-target)", "host", "date"})
+verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date"})
 ```
 
 Requests that don't include the full set of required headers in the `headers`
