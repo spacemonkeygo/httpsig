@@ -56,7 +56,7 @@ func BuildSignatureString(req *http.Request, headers []string) string {
 			values = append(values, fmt.Sprintf("%s: %s", h, req.Host))
 		case "date":
 			if req.Header.Get(h) == "" {
-				req.Header.Set(h, time.Now().Format(time.RFC1123))
+				req.Header.Set(h, time.Now().UTC().Format(http.TimeFormat))
 			}
 			values = append(values, fmt.Sprintf("%s: %s", h, req.Header.Get(h)))
 		default:
