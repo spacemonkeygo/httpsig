@@ -9,7 +9,7 @@ name: https://github.com/ahknight/httpsig
 ## Installing
 
 ```
-go get gopkg.in/spacemonkey/spacemonkeygo/httpsig.v0
+go get gopkg.in/spacemonkeygo/httpsig.v0
 ```
 
 ## Signing Requests
