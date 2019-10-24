@@ -120,6 +120,7 @@ If signature validation fails, a `401` is returned along with a
 
 - rsa-sha1 (using PKCS1v15)
 - rsa-sha256 (using PKCS1v15)
+- ecdsa-sha256
 - hmac-sha256
 
 ### License

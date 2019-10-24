@@ -105,6 +105,13 @@ header_check:
 				params.Algorithm, params.KeyId)
 		}
 		return RSAVerify(rsa_pubkey, crypto.SHA256, sig_data, params.Signature)
+	case "ecdsa-sha256":
+		ecdsa_pubkey := toECDSAPublicKey(key)
+		if ecdsa_pubkey == nil {
+			return fmt.Errorf("algorithm %q is not supported by key %q",
+				params.Algorithm, params.KeyId)
+		}
+		return ECDSAVerify(ecdsa_pubkey, crypto.SHA256, sig_data, params.Signature)
 	case "hmac-sha256":
 		hmac_key := toHMACKey(key)
 		if hmac_key == nil {
@@ -182,7 +189,7 @@ func getParams(req *http.Request, header, prefix string) *Params {
 func parseAlgorithm(s string) (algorithm string, ok bool) {
 	s = strings.TrimSpace(s)
 	switch s {
-	case "rsa-sha1", "rsa-sha256", "hmac-sha256":
+	case "rsa-sha1", "rsa-sha256", "ecdsa-sha256", "hmac-sha256":
 		return s, true
 	}
 	return "", false
