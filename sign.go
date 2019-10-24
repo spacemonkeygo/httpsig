@@ -15,6 +15,7 @@
 package httpsig
 
 import (
+	"crypto/ecdsa"
 	"crypto/rsa"
 	"encoding/base64"
 	"fmt"
@@ -64,6 +65,13 @@ func NewRSASHA1Signer(id string, key *rsa.PrivateKey, headers []string) (
 func NewRSASHA256Signer(id string, key *rsa.PrivateKey, headers []string) (
 	signer *Signer) {
 	return NewSigner(id, key, RSASHA256, headers)
+}
+
+// NewECDSASHA256Signer contructs a signer with the specified key id, ecdsa private
+// key and headers to sign.
+func NewECDSASHA256Signer(id string, key *ecdsa.PrivateKey, headers []string) (
+	signer *Signer) {
+	return NewSigner(id, key, ECDSASHA256, headers)
 }
 
 // NewHMACSHA256Signer contructs a signer with the specified key id, hmac key,

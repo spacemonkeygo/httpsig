@@ -15,6 +15,7 @@
 package httpsig
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
@@ -89,6 +90,26 @@ func toRSAPublicKey(key interface{}) *rsa.PublicKey {
 	case *rsa.PublicKey:
 		return k
 	case *rsa.PrivateKey:
+		return &k.PublicKey
+	default:
+		return nil
+	}
+}
+
+func toECDSAPrivateKey(key interface{}) *ecdsa.PrivateKey {
+	switch k := key.(type) {
+	case *ecdsa.PrivateKey:
+		return k
+	default:
+		return nil
+	}
+}
+
+func toECDSAPublicKey(key interface{}) *ecdsa.PublicKey {
+	switch k := key.(type) {
+	case *ecdsa.PublicKey:
+		return k
+	case *ecdsa.PrivateKey:
 		return &k.PublicKey
 	default:
 		return nil

@@ -19,6 +19,7 @@
 package httpsig
 
 import (
+	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -31,7 +32,7 @@ import (
 )
 
 var (
-	privKey = `-----BEGIN RSA PRIVATE KEY-----
+	privRSAKey = `-----BEGIN RSA PRIVATE KEY-----
 MIICXgIBAAKBgQDCFENGw33yGihy92pDjZQhl0C36rPJj+CvfSC8+q28hxA161QF
 NUd13wuCTUcq0Qd2qsBe/2hFyc2DCJJg0h1L78+6Z4UMR7EOcpfdUE9Hf3m/hs+F
 UR45uBJeDK1HSFHD8bHKD6kv8FPGfJTotc+2xjJwoYi+1hqp1fIekaxsyQIDAQAB
@@ -46,12 +47,25 @@ gIT7aFOYBFwGgQAQkWNKLvySgKbAZRTeLBacpHMuQdl1DfdntvAyqpAZ0lY0RKmW
 G6aFKaqQfOXKCyWoUiVknQJAXrlgySFci/2ueKlIE1QqIiLSZ8V8OlpFLRnb1pzI
 7U1yQXnTAEFYM560yJlzUpOb1V4cScGd365tiSMvxLOvTA==
 -----END RSA PRIVATE KEY-----`
+
+	privECDSAKey = `-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIG1OavhFPnayZivES62otFT6/xTFBHqDS5ViNCO8XvV2oAoGCCqGSM49
+AwEHoUQDQgAE0gTn0ky0WDyet0XfkeXahZ7FlwTeknfJrxZAZ+vIQmTZSTScJ7qD
+/Dp4y6Dyr3gcfvG4cVpR2h6XTBGBm2Fjng==
+-----END EC PRIVATE KEY-----`
 )
 
 func TestDate(t *testing.T) {
-	test := NewTest(t)
+	test := NewRSATest(t)
+	signer := NewRSASHA256Signer("Test", test.RSAPrivateKey(), []string{"date"})
+	testDate(t, test, signer)
 
-	signer := NewRSASHA256Signer("Test", test.PrivateKey, []string{"date"})
+	test = NewECDSATest(t)
+	signer = NewECDSASHA256Signer("Test", test.ECDSAPrivateKey(), []string{"date"})
+	testDate(t, test, signer)
+}
+
+func testDate(t *testing.T, test *Test, signer *Signer) {
 	verifier := NewVerifier(test)
 
 	req := test.NewRequest()
@@ -77,10 +91,18 @@ func TestDate(t *testing.T) {
 }
 
 func TestRequestTargetAndHost(t *testing.T) {
-	test := NewTest(t)
-
 	headers := []string{"(request-target)", "host", "date"}
-	signer := NewRSASHA256Signer("Test", test.PrivateKey, headers)
+
+	test := NewRSATest(t)
+	signer := NewRSASHA256Signer("Test", test.RSAPrivateKey(), headers)
+	testTargetAndHost(t, test, signer, headers)
+
+	test = NewECDSATest(t)
+	signer = NewECDSASHA256Signer("Test", test.ECDSAPrivateKey(), headers)
+	testTargetAndHost(t, test, signer, headers)
+}
+
+func testTargetAndHost(t *testing.T, test *Test, signer *Signer, headers []string) {
 	verifier := NewVerifier(test)
 
 	req := test.NewRequest()
@@ -137,15 +159,35 @@ func trimHeader(header http.Header, keepers ...string) http.Header {
 type Test struct {
 	tb testing.TB
 	KeyGetter
-	PrivateKey *rsa.PrivateKey
+	PrivateKey interface{}
 }
 
-func NewTest(tb testing.TB) *Test {
-	block, _ := pem.Decode([]byte(privKey))
+func NewRSATest(tb testing.TB) *Test {
+	block, _ := pem.Decode([]byte(privRSAKey))
 	if block == nil {
 		tb.Fatalf("test setup failure: malformed PEM on private key")
 	}
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		tb.Fatal(err)
+	}
+
+	keystore := NewMemoryKeyStore()
+	keystore.SetKey("Test", key)
+
+	return &Test{
+		tb:         tb,
+		KeyGetter:  keystore,
+		PrivateKey: key,
+	}
+}
+
+func NewECDSATest(tb testing.TB) *Test {
+	block, _ := pem.Decode([]byte(privECDSAKey))
+	if block == nil {
+		tb.Fatalf("test setup failure: malformed PEM on private key")
+	}
+	key, err := x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
 		tb.Fatal(err)
 	}
@@ -169,6 +211,22 @@ func (t *Test) NewRequest() *http.Request {
 	req.Header.Set("Digest",
 		"SHA-256=X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=")
 	return req
+}
+
+func (t *Test) RSAPrivateKey() *rsa.PrivateKey {
+	key, ok := t.PrivateKey.(*rsa.PrivateKey)
+	if !ok {
+		return nil
+	}
+	return key
+}
+
+func (t *Test) ECDSAPrivateKey() *ecdsa.PrivateKey {
+	key, ok := t.PrivateKey.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil
+	}
+	return key
 }
 
 func (t *Test) Fatal(msg interface{}) {

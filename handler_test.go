@@ -21,7 +21,7 @@ import (
 )
 
 func TestHandlerNoRealm(t *testing.T) {
-	test := NewTest(t)
+	test := NewRSATest(t)
 
 	v := NewVerifier(test)
 
@@ -44,7 +44,7 @@ func TestHandlerNoRealm(t *testing.T) {
 }
 
 func TestHandlerWithRealm(t *testing.T) {
-	test := NewTest(t)
+	test := NewRSATest(t)
 
 	v := NewVerifier(test)
 
@@ -67,7 +67,7 @@ func TestHandlerWithRealm(t *testing.T) {
 }
 
 func TestHandlerRejectsRequestWithoutRequiredHeadersInSignature(t *testing.T) {
-	test := NewTest(t)
+	test := NewRSATest(t)
 
 	v := NewVerifier(test)
 	v.SetRequiredHeaders([]string{"(request-target)", "date"})
@@ -80,7 +80,7 @@ func TestHandlerRejectsRequestWithoutRequiredHeadersInSignature(t *testing.T) {
 	req, err := http.NewRequest("GET", server.URL, nil)
 	test.AssertNoError(err)
 
-	s := NewRSASHA256Signer("Test", test.PrivateKey, []string{"date"})
+	s := NewRSASHA256Signer("Test", test.RSAPrivateKey(), []string{"date"})
 	test.AssertNoError(s.Sign(req))
 
 	resp, err := http.DefaultClient.Do(req)
@@ -94,7 +94,7 @@ func TestHandlerRejectsRequestWithoutRequiredHeadersInSignature(t *testing.T) {
 }
 
 func TestHandlerRejectsModifiedRequest(t *testing.T) {
-	test := NewTest(t)
+	test := NewRSATest(t)
 
 	v := NewVerifier(test)
 	v.SetRequiredHeaders([]string{"(request-target)", "date"})
@@ -107,7 +107,7 @@ func TestHandlerRejectsModifiedRequest(t *testing.T) {
 	req, err := http.NewRequest("GET", server.URL, nil)
 	test.AssertNoError(err)
 
-	s := NewRSASHA256Signer("Test", test.PrivateKey, v.RequiredHeaders())
+	s := NewRSASHA256Signer("Test", test.RSAPrivateKey(), v.RequiredHeaders())
 	test.AssertNoError(s.Sign(req))
 
 	req.URL.Path = "/foo"
@@ -123,7 +123,7 @@ func TestHandlerRejectsModifiedRequest(t *testing.T) {
 }
 
 func TestHandlerAcceptsSignedRequest(t *testing.T) {
-	test := NewTest(t)
+	test := NewRSATest(t)
 
 	v := NewVerifier(test)
 	v.SetRequiredHeaders([]string{"(request-target)", "date"})
@@ -136,7 +136,7 @@ func TestHandlerAcceptsSignedRequest(t *testing.T) {
 	req, err := http.NewRequest("GET", server.URL, nil)
 	test.AssertNoError(err)
 
-	s := NewRSASHA256Signer("Test", test.PrivateKey, v.RequiredHeaders())
+	s := NewRSASHA256Signer("Test", test.RSAPrivateKey(), v.RequiredHeaders())
 	test.AssertNoError(s.Sign(req))
 
 	resp, err := http.DefaultClient.Do(req)
