@@ -15,6 +15,8 @@
 package httpsig
 
 import (
+	"crypto"
+	ed "crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
@@ -42,16 +44,22 @@ func requestPath(req *http.Request) string {
 }
 
 // BuildSignatureString constructs a signature string following section 2.3
-func BuildSignatureString(req *http.Request, headers []string) string {
+func BuildSignatureString(req *http.Request, headers []string, created, expires time.Time) (string, error) {
 	if len(headers) == 0 {
-		headers = []string{"date"}
+		headers = []string{"(created)"}
 	}
+
 	values := make([]string, 0, len(headers))
 	for _, h := range headers {
+
 		switch h {
 		case "(request-target)":
 			values = append(values, fmt.Sprintf("%s: %s %s",
 				h, strings.ToLower(req.Method), requestPath(req)))
+		case "(created)":
+			values = append(values, fmt.Sprintf("%s: %d", h, created.Unix()))
+		case "(expires)":
+			values = append(values, fmt.Sprintf("%s: %d", h, expires.Unix()))
 		case "host":
 			values = append(values, fmt.Sprintf("%s: %s", h, req.Host))
 		case "date":
@@ -60,19 +68,23 @@ func BuildSignatureString(req *http.Request, headers []string) string {
 			}
 			values = append(values, fmt.Sprintf("%s: %s", h, req.Header.Get(h)))
 		default:
-			for _, value := range req.Header[http.CanonicalHeaderKey(h)] {
-				values = append(values,
-					fmt.Sprintf("%s: %s", h, strings.TrimSpace(value)))
+			vs, found := req.Header[http.CanonicalHeaderKey(h)]
+			if !found {
+				return "", fmt.Errorf("expected %s to exists", h)
+			}
+			for _, v := range vs {
+				values = append(values, fmt.Sprintf("%s: %s", h, strings.TrimSpace(v)))
 			}
 		}
 	}
-	return strings.Join(values, "\n")
+	return strings.Join(values, "\n"), nil
 }
 
 // BuildSignatureData is a convenience wrapper around BuildSignatureString that
 // returns []byte instead of a string.
-func BuildSignatureData(req *http.Request, headers []string) []byte {
-	return []byte(BuildSignatureString(req, headers))
+func BuildSignatureData(req *http.Request, headers []string) ([]byte, error) {
+	s, err := BuildSignatureString(req, headers, time.Time{}, time.Time{})
+	return []byte(s), err
 }
 
 func toRSAPrivateKey(key interface{}) *rsa.PrivateKey {
@@ -99,6 +111,30 @@ func toHMACKey(key interface{}) []byte {
 	switch k := key.(type) {
 	case []byte:
 		return k
+	default:
+		return nil
+	}
+}
+
+func toEd25519PrivateKey(key interface{}) crypto.PrivateKey {
+	switch k := key.(type) {
+	case []byte:
+		return k
+	case ed.PrivateKey:
+		return k
+	default:
+		return nil
+	}
+}
+
+func toEd25519PublicKey(key interface{}) ed.PublicKey {
+	switch k := key.(type) {
+	case []byte:
+		return k
+	case ed.PublicKey:
+		return k
+	case ed.PrivateKey:
+		return k.Public().(ed.PublicKey)
 	default:
 		return nil
 	}

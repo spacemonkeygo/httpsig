@@ -23,19 +23,19 @@ import (
 func RequireSignature(h http.Handler, v *Verifier, realm string) (
 	out http.Handler) {
 
-	var challenge_params []string
+	var challengeParams []string
 	if realm != "" {
-		challenge_params = append(challenge_params,
+		challengeParams = append(challengeParams,
 			fmt.Sprintf("realm=%q", realm))
 	}
 	if headers := v.RequiredHeaders(); len(headers) > 0 {
-		challenge_params = append(challenge_params,
+		challengeParams = append(challengeParams,
 			fmt.Sprintf("headers=%q", strings.Join(headers, " ")))
 	}
 
 	challenge := "Signature"
-	if len(challenge_params) > 0 {
-		challenge += fmt.Sprintf(" %s", strings.Join(challenge_params, ", "))
+	if len(challengeParams) > 0 {
+		challenge += fmt.Sprintf(" %s", strings.Join(challengeParams, ", "))
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

@@ -24,31 +24,31 @@ import (
 )
 
 type Verifier struct {
-	key_getter       KeyGetter
-	required_headers []string
+	keyGetter       KeyGetter
+	requiredHeaders []string
 }
 
-func NewVerifier(key_getter KeyGetter) *Verifier {
+func NewVerifier(kg KeyGetter) *Verifier {
 	v := &Verifier{
-		key_getter: key_getter,
+		keyGetter: kg,
 	}
 	v.SetRequiredHeaders(nil)
 	return v
 }
 
 func (v *Verifier) RequiredHeaders() []string {
-	return append([]string{}, v.required_headers...)
+	return append([]string{}, v.requiredHeaders...)
 }
 
 func (v *Verifier) SetRequiredHeaders(headers []string) {
 	if len(headers) == 0 {
 		headers = []string{"date"}
 	}
-	required_headers := make([]string, 0, len(headers))
+	requiredHeaders := make([]string, 0, len(headers))
 	for _, h := range headers {
-		required_headers = append(required_headers, strings.ToLower(h))
+		requiredHeaders = append(requiredHeaders, strings.ToLower(h))
 	}
-	v.required_headers = required_headers
+	v.requiredHeaders = requiredHeaders
 }
 
 func (v *Verifier) Verify(req *http.Request) error {
@@ -71,52 +71,60 @@ func (v *Verifier) Verify(req *http.Request) error {
 	}
 
 header_check:
-	for _, required_header := range v.required_headers {
+	for _, h := range v.requiredHeaders {
 		for _, header := range params.Headers {
-			if strings.ToLower(required_header) == strings.ToLower(header) {
+			if strings.ToLower(h) == strings.ToLower(header) {
 				continue header_check
 			}
 		}
 		return fmt.Errorf("missing required header in signature %q",
-			required_header)
+			h)
 	}
 
 	// calculate signature string for request
-	sig_data := BuildSignatureData(req, params.Headers)
+	sigData, err := BuildSignatureData(req, params.Headers)
+	if err != nil {
+		return err
+	}
 
 	// look up key based on keyId
-	key := v.key_getter.GetKey(params.KeyId)
+	key := v.keyGetter.GetKey(params.KeyId)
 	if key == nil {
 		return fmt.Errorf("no key with id %q", params.KeyId)
 	}
 
 	switch params.Algorithm {
 	case "rsa-sha1":
-		rsa_pubkey := toRSAPublicKey(key)
-		if rsa_pubkey == nil {
+		rsaPubkey := toRSAPublicKey(key)
+		if rsaPubkey == nil {
 			return fmt.Errorf("algorithm %q is not supported by key %q",
 				params.Algorithm, params.KeyId)
 		}
-		return RSAVerify(rsa_pubkey, crypto.SHA1, sig_data, params.Signature)
+		return RSAVerify(rsaPubkey, crypto.SHA1, sigData, params.Signature)
 	case "rsa-sha256":
-		rsa_pubkey := toRSAPublicKey(key)
-		if rsa_pubkey == nil {
+		rsaPubkey := toRSAPublicKey(key)
+		if rsaPubkey == nil {
 			return fmt.Errorf("algorithm %q is not supported by key %q",
 				params.Algorithm, params.KeyId)
 		}
-		return RSAVerify(rsa_pubkey, crypto.SHA256, sig_data, params.Signature)
+		return RSAVerify(rsaPubkey, crypto.SHA256, sigData, params.Signature)
 	case "hmac-sha256":
-		hmac_key := toHMACKey(key)
-		if hmac_key == nil {
+		hmacKey := toHMACKey(key)
+		if hmacKey == nil {
 			return fmt.Errorf("algorithm %q is not supported by key %q",
 				params.Algorithm, params.KeyId)
 		}
-		return HMACVerify(hmac_key, crypto.SHA256, sig_data, params.Signature)
+		return HMACVerify(hmacKey, crypto.SHA256, sigData, params.Signature)
+	case "ed25519":
+		ed25519Key := toEd25519PublicKey(key)
+		if ed25519Key == nil {
+			return fmt.Errorf("algorithm %q is not supported by key %q",
+				params.Algorithm, params.KeyId)
+		}
+		return Ed25519Verify(ed25519Key, sigData, params.Signature)
 	default:
 		return fmt.Errorf("unsupported algorithm %q", params.Algorithm)
 	}
-
-	return nil
 }
 
 // paramRE scans out recognized parameter keypairs. accepted values are those
@@ -182,7 +190,7 @@ func getParams(req *http.Request, header, prefix string) *Params {
 func parseAlgorithm(s string) (algorithm string, ok bool) {
 	s = strings.TrimSpace(s)
 	switch s {
-	case "rsa-sha1", "rsa-sha256", "hmac-sha256":
+	case "rsa-sha1", "rsa-sha256", "hmac-sha256", "ed25519":
 		return s, true
 	}
 	return "", false
