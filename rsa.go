@@ -69,6 +69,31 @@ func (a rsa_sha256) Verify(key interface{}, data, sig []byte) error {
 	return RSAVerify(k, crypto.SHA256, data, sig)
 }
 
+// HS2019 implements RSA PSS signatures over a SHA512 digest
+var HS2019 Algorithm = hs_2019{}
+
+type hs_2019 struct{}
+
+func (hs_2019) Name() string {
+	return "hs2019"
+}
+
+func (a hs_2019) Sign(key interface{}, data []byte) ([]byte, error) {
+	k := toRSAPrivateKey(key)
+	if k == nil {
+		return nil, unsupportedAlgorithm(a)
+	}
+	return RSASign(k, crypto.SHA512, data)
+}
+
+func (a hs_2019) Verify(key interface{}, data, sig []byte) error {
+	k := toRSAPublicKey(key)
+	if k == nil {
+		return unsupportedAlgorithm(a)
+	}
+	return RSAVerify(k, crypto.SH, data, sig)
+}
+
 // RSASign signs a digest of the data hashed using the provided hash
 func RSASign(key *rsa.PrivateKey, hash crypto.Hash, data []byte) (
 	signature []byte, err error) {
