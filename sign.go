@@ -73,6 +73,13 @@ func NewHMACSHA256Signer(id string, key []byte, headers []string) (
 	return NewSigner(id, key, HMACSHA256, headers)
 }
 
+// NewHS2019Signer contructs a signer with the specified key id, hmac key,
+// and headers to sign.
+func NewHS2019Signer(id string, key *rsa.PrivateKey, headers []string) (
+	signer *Signer) {
+	return NewSigner(id, key, HS2019, headers)
+}
+
 // Sign signs an http request and adds the signature to the authorization header
 func (r *Signer) Sign(req *http.Request) error {
 	params, err := signRequest(r.id, r.key, r.algo, r.headers, req)

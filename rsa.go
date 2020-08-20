@@ -83,7 +83,7 @@ func (a hs_2019) Sign(key interface{}, data []byte) ([]byte, error) {
 	if k == nil {
 		return nil, unsupportedAlgorithm(a)
 	}
-	return RSASign(k, crypto.SHA512, data)
+	return RSASignPSS(k, crypto.SHA512, data)
 }
 
 func (a hs_2019) Verify(key interface{}, data, sig []byte) error {
@@ -91,7 +91,7 @@ func (a hs_2019) Verify(key interface{}, data, sig []byte) error {
 	if k == nil {
 		return unsupportedAlgorithm(a)
 	}
-	return RSAVerify(k, crypto.SH, data, sig)
+	return RSAVerifyPSS(k, crypto.SHA512, data, sig)
 }
 
 // RSASign signs a digest of the data hashed using the provided hash
@@ -114,4 +114,28 @@ func RSAVerify(key *rsa.PublicKey, hash crypto.Hash, data, sig []byte) (
 		return err
 	}
 	return rsa.VerifyPKCS1v15(key, hash, h.Sum(nil), sig)
+}
+
+// RSASignPSS signs a digest of the data hashed using the provided hash
+func RSASignPSS(key *rsa.PrivateKey, hash crypto.Hash, data []byte) (
+	signature []byte, err error) {
+
+	h := hash.New()
+	if _, err := h.Write(data); err != nil {
+		return nil, err
+	}
+	//TODO: Derive signing algorithm from keyID?
+	return rsa.SignPSS(Rand, key, hash, h.Sum(nil), nil)
+}
+
+// RSAVerifyPSS verifies a signed digest of the data hashed using the provided hash
+func RSAVerifyPSS(key *rsa.PublicKey, hash crypto.Hash, data, sig []byte) (
+	err error) {
+
+	h := hash.New()
+	if _, err := h.Write(data); err != nil {
+		return err
+	}
+	//TODO: Derive signing algorithm from keyID?
+	return rsa.VerifyPSS(key, hash, h.Sum(nil), sig, nil)
 }
