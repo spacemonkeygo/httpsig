@@ -77,7 +77,7 @@ func NewHMACSHA256Signer(id string, key []byte, headers []string) (
 	return NewSigner(id, key, HMACSHA256, headers)
 }
 
-// NewHS2019Signer contructs a signer with the specified key id, hmac key,
+// NewHS2019PSSSigner constructs a signer with the specified key id, hmac key,
 // and headers to sign.
 func NewHS2019PSSSigner(id string, key *rsa.PrivateKey, headers []string) (
 	signer *Signer) {
