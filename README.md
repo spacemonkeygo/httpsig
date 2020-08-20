@@ -18,11 +18,11 @@ Signing requests is done by constructing a new `Signer`. The key id, key,
 algorithm, and what headers to sign are required.
 
 For example to construct a `Signer` with key id `"foo"`, using an RSA private
-key, for the rsa-sha256 algorithm, with the default header set, you can do:
+key, for the hs2019 algorithm and RSA key (PSS), with the default header set, you can do:
 
 ```
 var key *rsa.PrivateKey = ...
-signer := httpsig.NewSigner("foo", key, httpsig.RSASHA256, nil)
+signer := httpsig.NewSigner("foo", key, httpsig.HS1029_PSS, nil)
 ```
 
 There are helper functions for specific algorithms that are less verbose and
@@ -31,7 +31,7 @@ because the type required for the algorithm is known).
 
 ```
 var key *rsa.PrivateKey = ...
-signer := httpsig.NewRSASHA256Signer("foo", key, nil)
+signer := httpsig.NewHS2019Signer("foo", key, nil)
 ```
 
 By default, if no headers are passed to `NewSigner` (or the helpers), the
@@ -49,7 +49,7 @@ fmt.Println("AUTHORIZATION:", req.Header.Get('Authorization'))
 
 ...
 
-AUTHORIZATION: Signature: keyId="foo",algorithm="sha-256",signature="..."
+AUTHORIZATION: Signature: keyId="foo",algorithm="hs2019",signature="..."
 
 ```
 
