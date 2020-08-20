@@ -118,6 +118,9 @@ If signature validation fails, a `401` is returned along with a
 
 ## Supported algorithms
 
+- hs2019 (using PSS)
+
+### Deprecated algorithms
 - rsa-sha1 (using PKCS1v15)
 - rsa-sha256 (using PKCS1v15)
 - hmac-sha256
