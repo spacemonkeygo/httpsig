@@ -41,6 +41,10 @@ func NewSigner(id string, key interface{}, algo Algorithm, headers []string) (
 		algo: algo,
 	}
 
+	if algo.Name() != "hs2019" {
+		fmt.Printf("Algorithm %s is deprecated, please update to 'hs2019'", algo.Name())
+	}
+
 	// copy the headers slice, lowercasing as necessary
 	if len(headers) == 0 {
 		headers = []string{"(request-target)", "date"}
