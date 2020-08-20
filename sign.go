@@ -41,7 +41,7 @@ func NewSigner(id string, key interface{}, algo Algorithm, headers []string) (
 		algo: algo,
 	}
 
-	if algo.Name() != "hs2019" {
+	if !strings.Contains(algo.Name(), "hs2019") {
 		fmt.Printf("Algorithm %s is deprecated, please update to 'hs2019'", algo.Name())
 	}
 
@@ -79,9 +79,9 @@ func NewHMACSHA256Signer(id string, key []byte, headers []string) (
 
 // NewHS2019Signer contructs a signer with the specified key id, hmac key,
 // and headers to sign.
-func NewHS2019Signer(id string, key *rsa.PrivateKey, headers []string) (
+func NewHS2019PSSSigner(id string, key *rsa.PrivateKey, headers []string) (
 	signer *Signer) {
-	return NewSigner(id, key, HS2019, headers)
+	return NewSigner(id, key, HS2019_PSS, headers)
 }
 
 // Sign signs an http request and adds the signature to the authorization header

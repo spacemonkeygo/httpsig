@@ -112,7 +112,7 @@ header_check:
 				params.Algorithm, params.KeyId)
 		}
 		return HMACVerify(hmac_key, crypto.SHA256, sig_data, params.Signature)
-	case "hs2019":
+	case "hs2019_pss":
 		rsa_pubkey := toRSAPublicKey(key)
 		if rsa_pubkey == nil {
 			return fmt.Errorf("algorithm %q is not supported by key %q",
@@ -189,7 +189,7 @@ func getParams(req *http.Request, header, prefix string) *Params {
 func parseAlgorithm(s string) (algorithm string, ok bool) {
 	s = strings.TrimSpace(s)
 	switch s {
-	case "rsa-sha1", "rsa-sha256", "hmac-sha256", "hs2019":
+	case "rsa-sha1", "rsa-sha256", "hmac-sha256", "hs2019_pss":
 		return s, true
 	}
 	return "", false
