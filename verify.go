@@ -26,7 +26,6 @@ import (
 type Verifier struct {
 	key_getter       KeyGetter
 	required_headers []string
-	algorithm        Algorithm
 }
 
 func NewVerifier(key_getter KeyGetter) *Verifier {
@@ -87,17 +86,17 @@ header_check:
 	if key == nil {
 		return fmt.Errorf("no key with id %q", params.KeyId)
 	}
+	keyAlgorithm := v.key_getter.GetAlgorithm(params.KeyId)
+	if params.Algorithm == "hs2019" && keyAlgorithm == nil {
+		return fmt.Errorf("no key algorithm with id %q", params.KeyId)
+	}
 
 	if params.Algorithm != "hs2019" {
 		fmt.Printf("algorithm %s is deprecated, please update to 'hs2019'", params.Algorithm)
 	}
 
-	if params.Algorithm == "hs2019" && v.algorithm == nil {
-		return fmt.Errorf("missing required verifier algorithm")
-	}
-
-	if v.algorithm != nil && params.Algorithm != v.algorithm.Name() {
-		return fmt.Errorf("algorithm header mismatch. Signature header value: %s, derived value: %s", params.Algorithm, v.algorithm.Name())
+	if keyAlgorithm != nil && params.Algorithm != keyAlgorithm.Name() {
+		return fmt.Errorf("algorithm header mismatch. Signature header value: %s, derived value: %s", params.Algorithm, keyAlgorithm.Name())
 	}
 
 	switch params.Algorithm {
@@ -123,7 +122,7 @@ header_check:
 		}
 		return HMACVerify(hmac_key, crypto.SHA256, sig_data, params.Signature)
 	case "hs2019":
-		return v.algorithm.Verify(key, sig_data, params.Signature)
+		return keyAlgorithm.Verify(key, sig_data, params.Signature)
 	default:
 		return fmt.Errorf("unsupported algorithm %q", params.Algorithm)
 	}

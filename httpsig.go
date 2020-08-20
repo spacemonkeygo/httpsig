@@ -32,6 +32,7 @@ type Algorithm interface {
 // Other types will treated as if no key was returned.
 type KeyGetter interface {
 	GetKey(id string) interface{}
+	GetAlgorithm(id string) Algorithm
 }
 
 // KeyGetterFunc is a convenience type for implementing a KeyGetter with a
