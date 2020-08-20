@@ -98,6 +98,12 @@ var hmac_key []byte = ...
 keystore.SetKey("foo", hmac_key)
 ```
 
+In order to support hs2019 the keystore also includes a store for the key 
+algorithm. Key algorithms can be added using the SetKeyAlgorithm method:
+```
+keystore.SetKeyAlgorithm("foo", algorithm.HS2019_PSS)
+``` 
+
 ## Handler
 
 A convenience function is provided that wraps an `http.Handler` and verifies
