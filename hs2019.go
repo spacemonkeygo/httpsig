@@ -12,7 +12,7 @@ var HS2019_PSS Algorithm = hs2019_pss{}
 type hs2019_pss struct{}
 
 func (hs2019_pss) Name() string {
-	return "hs2019_pss"
+	return "hs2019"
 }
 
 func (a hs2019_pss) Sign(key interface{}, data []byte) ([]byte, error) {

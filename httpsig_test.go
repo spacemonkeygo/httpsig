@@ -53,6 +53,7 @@ func TestDate(t *testing.T) {
 
 	signer := NewHS2019PSSSigner("Test", test.PrivateKey, []string{"date"})
 	verifier := NewVerifier(test)
+	verifier.algorithm = HS2019_PSS
 
 	req := test.NewRequest()
 	test.AssertNoError(signer.Sign(req))
@@ -82,6 +83,7 @@ func TestRequestTargetAndHost(t *testing.T) {
 	headers := []string{"(request-target)", "host", "date"}
 	signer := NewHS2019PSSSigner("Test", test.PrivateKey, headers)
 	verifier := NewVerifier(test)
+	verifier.algorithm = HS2019_PSS
 
 	req := test.NewRequest()
 	test.AssertNoError(signer.Sign(req))
@@ -114,6 +116,32 @@ func TestRequestTargetAndHost(t *testing.T) {
 	req.Host = "blah"
 	test.AssertAnyError(verifier.Verify(req))
 	req.Host = orig_host
+}
+
+func TestAlgorithmMismatch(t *testing.T) {
+	test := NewTest(t)
+
+	signer := NewHS2019PSSSigner("Test", test.PrivateKey, nil)
+	verifier := NewVerifier(test)
+	verifier.algorithm = RSASHA256
+
+	req := test.NewRequest()
+	test.AssertNoError(signer.Sign(req))
+
+	err := verifier.Verify(req)
+	test.AssertAnyError(err)
+	test.AssertStringEqual(err.Error(),"algorithm header mismatch. Signature header value: hs2019, derived value: rsa-sha256")
+}
+
+func TestDeprecatedAlgorithm(t *testing.T) {
+	test := NewTest(t)
+
+	signer := NewRSASHA256Signer("Test", test.PrivateKey, nil)
+	verifier := NewVerifier(test)
+
+	req := test.NewRequest()
+	test.AssertNoError(signer.Sign(req))
+	test.AssertNoError(verifier.Verify(req))
 }
 
 /////////////////////////////////////////////////////////////////////////////

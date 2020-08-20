@@ -26,6 +26,7 @@ import (
 type Verifier struct {
 	key_getter       KeyGetter
 	required_headers []string
+	algorithm        Algorithm
 }
 
 func NewVerifier(key_getter KeyGetter) *Verifier {
@@ -60,9 +61,6 @@ func (v *Verifier) Verify(req *http.Request) error {
 	if params.KeyId == "" {
 		return fmt.Errorf("keyId is required")
 	}
-	if params.Algorithm == "" {
-		return fmt.Errorf("algorithm is required")
-	}
 	if len(params.Signature) == 0 {
 		return fmt.Errorf("signature is required")
 	}
@@ -90,6 +88,18 @@ header_check:
 		return fmt.Errorf("no key with id %q", params.KeyId)
 	}
 
+	if params.Algorithm != "hs2019" {
+		fmt.Printf("algorithm %s is deprecated, please update to 'hs2019'", params.Algorithm)
+	}
+
+	if params.Algorithm == "hs2019" && v.algorithm == nil {
+		return fmt.Errorf("missing required verifier algorithm")
+	}
+
+	if v.algorithm != nil && params.Algorithm != v.algorithm.Name() {
+		return fmt.Errorf("algorithm header mismatch. Signature header value: %s, derived value: %s", params.Algorithm, v.algorithm.Name())
+	}
+
 	switch params.Algorithm {
 	case "rsa-sha1":
 		rsa_pubkey := toRSAPublicKey(key)
@@ -112,13 +122,8 @@ header_check:
 				params.Algorithm, params.KeyId)
 		}
 		return HMACVerify(hmac_key, crypto.SHA256, sig_data, params.Signature)
-	case "hs2019_pss":
-		rsa_pubkey := toRSAPublicKey(key)
-		if rsa_pubkey == nil {
-			return fmt.Errorf("algorithm %q is not supported by key %q",
-				params.Algorithm, params.KeyId)
-		}
-		return RSAVerifyPSS(rsa_pubkey, crypto.SHA512, sig_data, params.Signature)
+	case "hs2019":
+		return v.algorithm.Verify(key, sig_data, params.Signature)
 	default:
 		return fmt.Errorf("unsupported algorithm %q", params.Algorithm)
 	}
@@ -188,8 +193,9 @@ func getParams(req *http.Request, header, prefix string) *Params {
 // parseAlgorithm parses recognized algorithm values
 func parseAlgorithm(s string) (algorithm string, ok bool) {
 	s = strings.TrimSpace(s)
+
 	switch s {
-	case "rsa-sha1", "rsa-sha256", "hmac-sha256", "hs2019_pss":
+	case "rsa-sha1", "rsa-sha256", "hmac-sha256", "hs2019":
 		return s, true
 	}
 	return "", false
