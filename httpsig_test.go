@@ -53,7 +53,6 @@ func TestDate(t *testing.T) {
 
 	signer := NewHS2019PSSSigner("Test", test.PrivateKey, []string{"date"})
 	verifier := NewVerifier(test)
-	verifier.algorithm = HS2019_PSS
 
 	req := test.NewRequest()
 	test.AssertNoError(signer.Sign(req))
@@ -83,7 +82,6 @@ func TestRequestTargetAndHost(t *testing.T) {
 	headers := []string{"(request-target)", "host", "date"}
 	signer := NewHS2019PSSSigner("Test", test.PrivateKey, headers)
 	verifier := NewVerifier(test)
-	verifier.algorithm = HS2019_PSS
 
 	req := test.NewRequest()
 	test.AssertNoError(signer.Sign(req))
@@ -121,22 +119,21 @@ func TestRequestTargetAndHost(t *testing.T) {
 func TestAlgorithmMismatch(t *testing.T) {
 	test := NewTest(t)
 
-	signer := NewHS2019PSSSigner("Test", test.PrivateKey, nil)
+	signer := NewRSASHA256Signer("Test", test.PrivateKey, nil)
 	verifier := NewVerifier(test)
-	verifier.algorithm = RSASHA256
 
 	req := test.NewRequest()
 	test.AssertNoError(signer.Sign(req))
 
 	err := verifier.Verify(req)
 	test.AssertAnyError(err)
-	test.AssertStringEqual(err.Error(),"algorithm header mismatch. Signature header value: hs2019, derived value: rsa-sha256")
+	test.AssertStringEqual(err.Error(),"algorithm header mismatch. Signature header value: rsa-sha256, derived value: hs2019")
 }
 
 func TestDeprecatedAlgorithm(t *testing.T) {
 	test := NewTest(t)
 
-	signer := NewRSASHA256Signer("Test", test.PrivateKey, nil)
+	signer := NewRSASHA256Signer("Test_SHA256", test.PrivateKey, nil)
 	verifier := NewVerifier(test)
 
 	req := test.NewRequest()
@@ -180,6 +177,9 @@ func NewTest(tb testing.TB) *Test {
 
 	keystore := NewMemoryKeyStore()
 	keystore.SetKey("Test", key)
+	keystore.SetKeyAlgorithm("Test", HS2019_PSS)
+
+	keystore.SetKey("Test_SHA256", key)
 
 	return &Test{
 		tb:         tb,
@@ -195,7 +195,7 @@ func (t *Test) NewRequest() *http.Request {
 	req.Header.Set("Date", "Thu, 05 Jan 2014 21:31:40 GMT")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Digest",
-		"SHA-256=X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=")
+		"SHA-512=X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=")
 	return req
 }
 

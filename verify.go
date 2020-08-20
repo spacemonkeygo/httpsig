@@ -86,7 +86,7 @@ header_check:
 	if key == nil {
 		return fmt.Errorf("no key with id %q", params.KeyId)
 	}
-	keyAlgorithm := v.key_getter.GetAlgorithm(params.KeyId)
+	keyAlgorithm := v.key_getter.GetKeyAlgorithm(params.KeyId)
 	if params.Algorithm == "hs2019" && keyAlgorithm == nil {
 		return fmt.Errorf("no key algorithm with id %q", params.KeyId)
 	}

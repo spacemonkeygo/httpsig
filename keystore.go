@@ -22,6 +22,7 @@ type MemoryKeyStore struct {
 func NewMemoryKeyStore() *MemoryKeyStore {
 	return &MemoryKeyStore{
 		keys: make(map[string]interface{}),
+		keyAlgorithms: make(map[string]Algorithm),
 	}
 }
 

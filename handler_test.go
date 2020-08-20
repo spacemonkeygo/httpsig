@@ -136,7 +136,7 @@ func TestHandlerAcceptsSignedRequest(t *testing.T) {
 	req, err := http.NewRequest("GET", server.URL, nil)
 	test.AssertNoError(err)
 
-	s := NewRSASHA256Signer("Test", test.PrivateKey, v.RequiredHeaders())
+	s := NewHS2019PSSSigner("Test", test.PrivateKey, v.RequiredHeaders())
 	test.AssertNoError(s.Sign(req))
 
 	resp, err := http.DefaultClient.Do(req)
