@@ -31,7 +31,7 @@ because the type required for the algorithm is known).
 
 ```
 var key *rsa.PrivateKey = ...
-signer := httpsig.NewHS2019Signer("foo", key, nil)
+signer := httpsig.NewHS2019PSSSigner("foo", key, nil)
 ```
 
 By default, if no headers are passed to `NewSigner` (or the helpers), the
