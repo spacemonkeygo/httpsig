@@ -7,15 +7,15 @@ import (
 
 
 // HS2019 implements PSS signatures over a SHA512 digest
-var HS2019_PSS Algorithm = hs_2019_pss{}
+var HS2019_PSS Algorithm = hs2019_pss{}
 
-type hs_2019_pss struct{}
+type hs2019_pss struct{}
 
-func (hs_2019_pss) Name() string {
+func (hs2019_pss) Name() string {
 	return "hs2019_pss"
 }
 
-func (a hs_2019_pss) Sign(key interface{}, data []byte) ([]byte, error) {
+func (a hs2019_pss) Sign(key interface{}, data []byte) ([]byte, error) {
 	k := toRSAPrivateKey(key)
 	if k == nil {
 		return nil, unsupportedAlgorithm(a)
@@ -23,7 +23,7 @@ func (a hs_2019_pss) Sign(key interface{}, data []byte) ([]byte, error) {
 	return RSASignPSS(k, crypto.SHA512, data)
 }
 
-func (a hs_2019_pss) Verify(key interface{}, data, sig []byte) error {
+func (a hs2019_pss) Verify(key interface{}, data, sig []byte) error {
 	k := toRSAPublicKey(key)
 	if k == nil {
 		return unsupportedAlgorithm(a)
