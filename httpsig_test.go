@@ -51,7 +51,7 @@ G6aFKaqQfOXKCyWoUiVknQJAXrlgySFci/2ueKlIE1QqIiLSZ8V8OlpFLRnb1pzI
 func TestDate(t *testing.T) {
 	test := NewTest(t)
 
-	signer := NewRSASHA256Signer("Test", test.PrivateKey, []string{"date"})
+	signer := NewHS2019Signer("Test", test.PrivateKey, []string{"date"})
 	verifier := NewVerifier(test)
 
 	req := test.NewRequest()
@@ -80,7 +80,7 @@ func TestRequestTargetAndHost(t *testing.T) {
 	test := NewTest(t)
 
 	headers := []string{"(request-target)", "host", "date"}
-	signer := NewRSASHA256Signer("Test", test.PrivateKey, headers)
+	signer := NewHS2019Signer("Test", test.PrivateKey, headers)
 	verifier := NewVerifier(test)
 
 	req := test.NewRequest()
