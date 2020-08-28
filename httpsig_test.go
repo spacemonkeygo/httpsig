@@ -51,7 +51,7 @@ G6aFKaqQfOXKCyWoUiVknQJAXrlgySFci/2ueKlIE1QqIiLSZ8V8OlpFLRnb1pzI
 func TestDate(t *testing.T) {
 	test := NewTest(t)
 
-	signer := NewHS2019PSSSigner("Test", test.PrivateKey, []string{"date"})
+	signer := NewHS2019PSSSigner("Test", test.PrivateKey, []string{"date"}, rsa.PSSSaltLengthAuto)
 	verifier := NewVerifier(test)
 
 	req := test.NewRequest()
@@ -80,7 +80,7 @@ func TestRequestTargetAndHost(t *testing.T) {
 	test := NewTest(t)
 
 	headers := []string{"(request-target)", "host", "date"}
-	signer := NewHS2019PSSSigner("Test", test.PrivateKey, headers)
+	signer := NewHS2019PSSSigner("Test", test.PrivateKey, headers, rsa.PSSSaltLengthAuto)
 	verifier := NewVerifier(test)
 
 	req := test.NewRequest()
@@ -177,7 +177,7 @@ func NewTest(tb testing.TB) *Test {
 
 	keystore := NewMemoryKeyStore()
 	keystore.SetKey("Test", key)
-	keystore.SetKeyAlgorithm("Test", HS2019_PSS)
+	keystore.SetKeyAlgorithm("Test", NewHS2019_PSS(rsa.PSSSaltLengthAuto))
 
 	keystore.SetKey("Test_SHA256", key)
 

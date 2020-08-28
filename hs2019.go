@@ -5,15 +5,12 @@ import (
 	"crypto/rsa"
 )
 
-// HS2019 implements PSS signatures over a SHA512 digest
-var HS2019_PSS Algorithm = hs2019_pss{}
-
 type hs2019_pss struct {
 	saltLength int
 	hash       crypto.Hash
 }
 
-func (hs2019_pss) HS2019_PSS(saltLenght int) *hs2019_pss {
+func NewHS2019_PSS(saltLenght int) *hs2019_pss {
 	return &hs2019_pss{
 		saltLength: saltLenght,
 		hash:       crypto.SHA512,
@@ -48,6 +45,6 @@ func (a hs2019_pss) Verify(key interface{}, data, sig []byte) error {
 	if _, err := h.Write(data); err != nil {
 		return err
 	}
-	opt := &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash}
+	opt := &rsa.PSSOptions{SaltLength: a.saltLength}
 	return rsa.VerifyPSS(k, a.hash, h.Sum(nil), sig, opt)
 }

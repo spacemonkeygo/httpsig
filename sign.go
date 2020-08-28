@@ -79,9 +79,9 @@ func NewHMACSHA256Signer(id string, key []byte, headers []string) (
 
 // NewHS2019PSSSigner constructs a signer with the specified key id, hmac key,
 // and headers to sign.
-func NewHS2019PSSSigner(id string, key *rsa.PrivateKey, headers []string) (
+func NewHS2019PSSSigner(id string, key *rsa.PrivateKey, headers []string, saltLength int) (
 	signer *Signer) {
-	return NewSigner(id, key, HS2019_PSS, headers)
+	return NewSigner(id, key, NewHS2019_PSS(saltLength), headers)
 }
 
 // Sign signs an http request and adds the signature to the authorization header
