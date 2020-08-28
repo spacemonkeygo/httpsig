@@ -15,6 +15,7 @@
 package httpsig
 
 import (
+	"crypto/rsa"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -136,7 +137,7 @@ func TestHandlerAcceptsSignedRequest(t *testing.T) {
 	req, err := http.NewRequest("GET", server.URL, nil)
 	test.AssertNoError(err)
 
-	s := NewRSASHA256Signer("Test", test.PrivateKey, v.RequiredHeaders())
+	s := NewHS2019PSSSigner("Test", test.PrivateKey, v.RequiredHeaders(), rsa.PSSSaltLengthAuto)
 	test.AssertNoError(s.Sign(req))
 
 	resp, err := http.DefaultClient.Do(req)

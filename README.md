@@ -18,11 +18,11 @@ Signing requests is done by constructing a new `Signer`. The key id, key,
 algorithm, and what headers to sign are required.
 
 For example to construct a `Signer` with key id `"foo"`, using an RSA private
-key, for the rsa-sha256 algorithm, with the default header set, you can do:
+key, for the hs2019 algorithm and RSA key (PSS), with the default header set, you can do:
 
 ```
 var key *rsa.PrivateKey = ...
-signer := httpsig.NewSigner("foo", key, httpsig.RSASHA256, nil)
+signer := httpsig.NewSigner("foo", key, httpsig.HS1029_PSS, nil)
 ```
 
 There are helper functions for specific algorithms that are less verbose and
@@ -31,7 +31,7 @@ because the type required for the algorithm is known).
 
 ```
 var key *rsa.PrivateKey = ...
-signer := httpsig.NewRSASHA256Signer("foo", key, nil)
+signer := httpsig.NewHS2019PSSSigner("foo", key, nil, rsa.PSSSaltLengthEqualsHash)
 ```
 
 By default, if no headers are passed to `NewSigner` (or the helpers), the
@@ -49,7 +49,7 @@ fmt.Println("AUTHORIZATION:", req.Header.Get('Authorization'))
 
 ...
 
-AUTHORIZATION: Signature: keyId="foo",algorithm="sha-256",signature="..."
+AUTHORIZATION: Signature: keyId="foo",algorithm="hs2019",signature="..."
 
 ```
 
@@ -98,6 +98,12 @@ var hmac_key []byte = ...
 keystore.SetKey("foo", hmac_key)
 ```
 
+In order to support hs2019 the keystore also includes a store for the key 
+algorithm. Key algorithms can be added using the SetKeyAlgorithm method:
+```
+keystore.SetKeyAlgorithm("foo", NewHS2019_PSS(rsa.PSSSaltLengthEqualHash))
+``` 
+
 ## Handler
 
 A convenience function is provided that wraps an `http.Handler` and verifies
@@ -118,6 +124,9 @@ If signature validation fails, a `401` is returned along with a
 
 ## Supported algorithms
 
+- hs2019 (using PSS)
+
+### Deprecated algorithms
 - rsa-sha1 (using PKCS1v15)
 - rsa-sha256 (using PKCS1v15)
 - hmac-sha256

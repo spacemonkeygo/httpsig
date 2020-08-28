@@ -60,9 +60,6 @@ func (v *Verifier) Verify(req *http.Request) error {
 	if params.KeyId == "" {
 		return fmt.Errorf("keyId is required")
 	}
-	if params.Algorithm == "" {
-		return fmt.Errorf("algorithm is required")
-	}
 	if len(params.Signature) == 0 {
 		return fmt.Errorf("signature is required")
 	}
@@ -89,6 +86,18 @@ header_check:
 	if key == nil {
 		return fmt.Errorf("no key with id %q", params.KeyId)
 	}
+	keyAlgorithm := v.key_getter.GetKeyAlgorithm(params.KeyId)
+	if params.Algorithm == "hs2019" && keyAlgorithm == nil {
+		return fmt.Errorf("no key algorithm with id %q", params.KeyId)
+	}
+
+	if params.Algorithm != "hs2019" {
+		fmt.Printf("algorithm %s is deprecated, please update to 'hs2019'", params.Algorithm)
+	}
+
+	if keyAlgorithm != nil && params.Algorithm != keyAlgorithm.Name() {
+		return fmt.Errorf("algorithm header mismatch. Signature header value: %s, derived value: %s", params.Algorithm, keyAlgorithm.Name())
+	}
 
 	switch params.Algorithm {
 	case "rsa-sha1":
@@ -112,6 +121,8 @@ header_check:
 				params.Algorithm, params.KeyId)
 		}
 		return HMACVerify(hmac_key, crypto.SHA256, sig_data, params.Signature)
+	case "hs2019":
+		return keyAlgorithm.Verify(key, sig_data, params.Signature)
 	default:
 		return fmt.Errorf("unsupported algorithm %q", params.Algorithm)
 	}
@@ -181,8 +192,9 @@ func getParams(req *http.Request, header, prefix string) *Params {
 // parseAlgorithm parses recognized algorithm values
 func parseAlgorithm(s string) (algorithm string, ok bool) {
 	s = strings.TrimSpace(s)
+
 	switch s {
-	case "rsa-sha1", "rsa-sha256", "hmac-sha256":
+	case "rsa-sha1", "rsa-sha256", "hmac-sha256", "hs2019":
 		return s, true
 	}
 	return "", false

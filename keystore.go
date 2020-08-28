@@ -16,11 +16,13 @@ package httpsig
 
 type MemoryKeyStore struct {
 	keys map[string]interface{}
+	keyAlgorithms map[string]Algorithm
 }
 
 func NewMemoryKeyStore() *MemoryKeyStore {
 	return &MemoryKeyStore{
 		keys: make(map[string]interface{}),
+		keyAlgorithms: make(map[string]Algorithm),
 	}
 }
 
@@ -30,4 +32,12 @@ func (m *MemoryKeyStore) GetKey(id string) interface{} {
 
 func (m *MemoryKeyStore) SetKey(id string, key interface{}) {
 	m.keys[id] = key
+}
+
+func (m *MemoryKeyStore) SetKeyAlgorithm(id string, algorithm Algorithm) {
+	m.keyAlgorithms[id] = algorithm
+}
+
+func (m *MemoryKeyStore) GetKeyAlgorithm(id string) Algorithm {
+	return m.keyAlgorithms[id]
 }
