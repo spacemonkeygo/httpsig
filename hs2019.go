@@ -5,11 +5,20 @@ import (
 	"crypto/rsa"
 )
 
-
 // HS2019 implements PSS signatures over a SHA512 digest
 var HS2019_PSS Algorithm = hs2019_pss{}
 
-type hs2019_pss struct{}
+type hs2019_pss struct {
+	saltLength int
+	hash       crypto.Hash
+}
+
+func (hs2019_pss) HS2019_PSS(saltLenght int) *hs2019_pss {
+	return &hs2019_pss{
+		saltLength: saltLenght,
+		hash:       crypto.SHA512,
+	}
+}
 
 func (hs2019_pss) Name() string {
 	return "hs2019"
@@ -20,7 +29,13 @@ func (a hs2019_pss) Sign(key interface{}, data []byte) ([]byte, error) {
 	if k == nil {
 		return nil, unsupportedAlgorithm(a)
 	}
-	return RSASignPSS(k, crypto.SHA512, data)
+
+	h := a.hash.New()
+	if _, err := h.Write(data); err != nil {
+		return nil, err
+	}
+	opt := &rsa.PSSOptions{SaltLength: a.saltLength}
+	return rsa.SignPSS(Rand, k, a.hash, h.Sum(nil), opt)
 }
 
 func (a hs2019_pss) Verify(key interface{}, data, sig []byte) error {
@@ -28,29 +43,11 @@ func (a hs2019_pss) Verify(key interface{}, data, sig []byte) error {
 	if k == nil {
 		return unsupportedAlgorithm(a)
 	}
-	return RSAVerifyPSS(k, crypto.SHA512, data, sig)
-}
 
-// RSASignPSS signs a digest of the data hashed using the provided hash
-func RSASignPSS(key *rsa.PrivateKey, hash crypto.Hash, data []byte) (
-	signature []byte, err error) {
-
-	h := hash.New()
-	if _, err := h.Write(data); err != nil {
-		return nil, err
-	}
-	opt := &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash}
-	return rsa.SignPSS(Rand, key, hash, h.Sum(nil), opt)
-}
-
-// RSAVerifyPSS verifies a signed digest of the data hashed using the provided hash
-func RSAVerifyPSS(key *rsa.PublicKey, hash crypto.Hash, data, sig []byte) (
-	err error) {
-
-	h := hash.New()
+	h := a.hash.New()
 	if _, err := h.Write(data); err != nil {
 		return err
 	}
 	opt := &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash}
-	return rsa.VerifyPSS(key, hash, h.Sum(nil), sig, opt)
+	return rsa.VerifyPSS(k, a.hash, h.Sum(nil), sig, opt)
 }
