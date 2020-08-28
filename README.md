@@ -31,7 +31,7 @@ because the type required for the algorithm is known).
 
 ```
 var key *rsa.PrivateKey = ...
-signer := httpsig.NewHS2019PSSSigner("foo", key, nil)
+signer := httpsig.NewHS2019PSSSigner("foo", key, nil, rsa.PSSSaltLengthEqualsHash)
 ```
 
 By default, if no headers are passed to `NewSigner` (or the helpers), the
@@ -101,7 +101,7 @@ keystore.SetKey("foo", hmac_key)
 In order to support hs2019 the keystore also includes a store for the key 
 algorithm. Key algorithms can be added using the SetKeyAlgorithm method:
 ```
-keystore.SetKeyAlgorithm("foo", algorithm.HS2019_PSS)
+keystore.SetKeyAlgorithm("foo", NewHS2019_PSS(rsa.PSSSaltLengthEqualHash))
 ``` 
 
 ## Handler
