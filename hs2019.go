@@ -39,7 +39,8 @@ func RSASignPSS(key *rsa.PrivateKey, hash crypto.Hash, data []byte) (
 	if _, err := h.Write(data); err != nil {
 		return nil, err
 	}
-	return rsa.SignPSS(Rand, key, hash, h.Sum(nil), nil)
+	opt := &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash}
+	return rsa.SignPSS(Rand, key, hash, h.Sum(nil), opt)
 }
 
 // RSAVerifyPSS verifies a signed digest of the data hashed using the provided hash
@@ -50,5 +51,6 @@ func RSAVerifyPSS(key *rsa.PublicKey, hash crypto.Hash, data, sig []byte) (
 	if _, err := h.Write(data); err != nil {
 		return err
 	}
-	return rsa.VerifyPSS(key, hash, h.Sum(nil), sig, nil)
+	opt := &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash}
+	return rsa.VerifyPSS(key, hash, h.Sum(nil), sig, opt)
 }
