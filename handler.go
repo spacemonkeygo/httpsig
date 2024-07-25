@@ -16,6 +16,7 @@ package httpsig
 
 import (
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 )
@@ -43,7 +44,7 @@ func RequireSignature(h http.Handler, v *Verifier, realm string) (
 		if err != nil {
 			w.Header()["WWW-Authenticate"] = []string{challenge}
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprintln(w, err.Error())
+			fmt.Fprintln(w, html.EscapeString(err.Error()))
 			return
 		}
 		h.ServeHTTP(w, req)
